@@ -1,11 +1,11 @@
 module tb;
 
     logic bclk = 0;
-    logic [15:0] audio_mem [0:1000000];
+    logic audio_mem [0:1000000];
     logic [31:0] index = 0;
     logic data = 0;
     logic rst_n = 0;
-    logic out;
+    logic signed [15:0] out;
 
 
     always #5 bclk = ~bclk;
@@ -20,20 +20,20 @@ module tb;
     );
 
     initial begin
-         $readmemh("audio.hex", audio_mem);
+         $readmemb("audio.hex", audio_mem);
          rst_n = 0;
          repeat (10) @ (posedge  bclk);
          rst_n = 1;
 
     end
 
-    always_ff @(posedge bclk) begin
+    always @(posedge bclk) begin
         if (~rst_n)
             index <= 0;
         else begin
             index <= index + 1;
-            data <= audio_mem[i];
-            $display("Index=%d  out=%b", index, out);    
+            data <= audio_mem[index];
+            $display("Index=%d  out=%b data=%b", index, out, data);    
         end
     end
 endmodule
