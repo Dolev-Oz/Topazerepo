@@ -36,10 +36,9 @@ audio = audio.set_channels(1).set_sample_width(2)
 
 samples = audio.get_array_of_samples()
 
-with open(outfile, "wb") as f:
+with open(outfile, "w") as f:
     for s in samples:
         # mask to 16 bits just in case
-        # f.write(f"{(s & 0xffff):04x}\n")
-        f.write((s & 0xffff).to_bytes(2, byteorder="little", signed=False))
+        f.write(f"{(s & 0xffff):04x}\n")
 
 print(f"wrote {len(samples)} samples to {outfile}")

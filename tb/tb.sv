@@ -1,39 +1,71 @@
-module tb;
+module tpz_top_tb;
 
-    logic bclk = 0;
-    logic audio_mem [0:1000000];
+    // Logging levels: 0=OFF, 1=ERROR, 2=WARNING, 3=INFO, 4=DEBUG
+    parameter LOG_LEVEL = 4;
+
+    `include "tb/logging.svh"
+
+    parameter NUM_SAMPLES = 3;
+
+    logic clk = 0;
+    logic [15:0] audio_mem [0:100000];
     logic [31:0] index = 0;
-    logic data = 0;
+    logic signed [15:0] data = 0;
     logic rst_n = 0;
     logic signed [15:0] out;
 
+    logic ready;
+    logic serial_data;
+    logic lrclk;
+    logic bclk;
 
-    always #5 bclk = ~bclk;
+
+    always #5 clk = ~clk;
 
     tpz_top dut (
         .rst_n(rst_n),
         .bclk(bclk),
-        .serial_data(data),
-        .lrclk(bclk),    
+        .serial_data(serial_data),
+        .lrclk(lrclk),
 
         .out(out)
     );
 
+    sample_to_i2s sample_to_i2s_i (
+        .clk(clk),
+        .rst_n(rst_n),
+        .sample(data),
+        .valid(1'b1),
+        .ready(ready),
+        .bclk(bclk),
+        .serial_data(serial_data),
+        .lrclk(lrclk)
+    );
+
     initial begin
-         $readmemb("audio.hex", audio_mem);
-         rst_n = 0;
-         repeat (10) @ (posedge  bclk);
-         rst_n = 1;
+        $readmemh("audio.hex", audio_mem);
+        rst_n = 0;
+        repeat (10) @ (posedge clk);
+        rst_n = 1;
+
+        `LOG_INFO($sformatf("Starting simulation... audio_mem[0]=%x", audio_mem[0]));
 
     end
 
-    always @(posedge bclk) begin
+    always @(posedge clk) begin
         if (~rst_n)
             index <= 0;
         else begin
-            index <= index + 1;
-            data <= audio_mem[index];
-            $display("Index=%d  out=%b data=%b", index, out, data);    
+            if (index >= NUM_SAMPLES) begin
+                `LOG_INFO("Reached end of samples. Stopping simulation.");
+                $finish;
+            end
+            if (ready) begin
+                index <= index + 1;
+                data <= audio_mem[index];
+                `LOG_DEBUG($sformatf("Index=%d  out=%x data=%x", index, out, data));
+            end
+            `LOG_DEBUG($sformatf("serial_data=%b lrclk=%b bclk=%b", serial_data, lrclk, bclk));
         end
     end
 endmodule
