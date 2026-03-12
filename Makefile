@@ -1,4 +1,4 @@
-TOP = tpz_top_tb
+TOP ?= tpz_top_tb
 OUT = sim/sim.out
 
 DEBUG ?=
@@ -8,6 +8,7 @@ LOG_LEVEL_OPT := $(if $(LOG_LEVEL),-DLOG_LEVEL=$(LOG_LEVEL),$(LOG_DEBUG))
 # Synthesis flags
 SYNTHESIS_FLAGS := -g2012
 SYNTHESIS_FLAGS += -DSIMULATION
+SYNTHESIS_FLAGS += -Iinclude
 SYNTHESIS_FLAGS += $(LOG_LEVEL_OPT)
 
 # Parameters (can be overridden from command line)

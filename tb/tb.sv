@@ -3,7 +3,7 @@ module tpz_top_tb;
     // Logging levels: 0=OFF, 1=ERROR, 2=WARNING, 3=INFO, 4=DEBUG
     parameter LOG_LEVEL = 4;
 
-    `include "tb/logging.svh"
+    `include "logging.svh"
 
     parameter NUM_SAMPLES = 3;
 
@@ -14,6 +14,7 @@ module tpz_top_tb;
     logic rst_n = 0;
     logic signed [15:0] out;
 
+    logic valid = 1'b0;
     logic ready;
     logic serial_data;
     logic lrclk;
@@ -35,7 +36,7 @@ module tpz_top_tb;
         .clk(clk),
         .rst_n(rst_n),
         .sample(data),
-        .valid(1'b1),
+        .valid(valid),
         .ready(ready),
         .bclk(bclk),
         .serial_data(serial_data),
@@ -53,9 +54,11 @@ module tpz_top_tb;
     end
 
     always @(posedge clk) begin
-        if (~rst_n)
+        if (~rst_n) begin
             index <= 0;
-        else begin
+            valid <= 1'b0;
+        end else begin
+            valid <= 1'b0;
             if (index >= NUM_SAMPLES) begin
                 `LOG_INFO("Reached end of samples. Stopping simulation.");
                 $finish;
@@ -63,7 +66,8 @@ module tpz_top_tb;
             if (ready) begin
                 index <= index + 1;
                 data <= audio_mem[index];
-                `LOG_DEBUG($sformatf("Index=%d  out=%x data=%x", index, out, data));
+                `LOG_INFO($sformatf("Index=%d  out=%x data=%x", index, out, data));
+                valid <= 1'b1;
             end
             `LOG_DEBUG($sformatf("serial_data=%b lrclk=%b bclk=%b", serial_data, lrclk, bclk));
         end
